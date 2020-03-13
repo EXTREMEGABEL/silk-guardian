@@ -1,4 +1,7 @@
 # silk-guardian
+
+This Version of silk guardian is modified to simply shutdown the system if a specific usb device was removed
+
 Silk Guardian is an anti-forensic LKM kill-switch that waits for a change on your usb ports and then wipes your ram, deletes precious files, and turns off your computer.
 
  Very Very much inspired by [usbkill](https://github.com/hephaest0s/usbkill)
