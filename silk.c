@@ -10,31 +10,6 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Greg Kroah-Hartman and Nate Brune");
 MODULE_DESCRIPTION("A module that protects you from having a terrible horrible no good very bad day.");
-
-static void panic_time(struct usb_device *usb)
-{
-	int i;
-	struct device *dev;
-
-	pr_info("shredding...\n");
-	for (i = 0; remove_files[i] != NULL; ++i) {
-		char *shred_argv[] = {
-			"/usr/bin/shred",
-			"-f", "-u", "-n",
-			shredIterations,
-			remove_files[i],
-			NULL,
-		};
-		call_usermodehelper(shred_argv[0], shred_argv,
-				    NULL, UMH_WAIT_EXEC);
-	}
-	printk("...done.\n");
-	for (dev = &usb->dev; dev; dev = dev->parent)
-		mutex_unlock(&dev->mutex);
-	printk("Syncing & powering off.\n");
-	kernel_power_off();
-}
-
 /*
  * returns 0 if no match, 1 if match
  *
@@ -83,29 +58,24 @@ static void usb_dev_change(struct usb_device *dev)
 	const struct usb_device_id *dev_id;
 
 	/* Check our whitelist to see if we want to ignore this device */
-   unsigned long whitelist_len = sizeof(whitelist_table)/sizeof(whitelist_table[0]);
+   unsigned long devicelist_len = sizeof(devicelist_table)/sizeof(devicelist_table[0]);
    int i; // GNU89 standard
-   for(i = 0; i < whitelist_len; i++)
+   for(i = 0; i < devicelist_len; i++)
    {
-      dev_id = &whitelist_table[i];
+      dev_id = &devicelist_table[i];
       if (usb_match_device(dev, dev_id))
       {
-         pr_info("Device is ignored\n");
-         return;
+         pr_info("Magic Device removed Powering off\n");
+         printk("Powering down\n");
+	 kernel_power_off();
+	 return;
       }
    }
-
-	/* Not a device we were ignoring, something bad went wrong, panic! */
-	panic_time(dev);
 }
 
 static int notify(struct notifier_block *self, unsigned long action, void *dev)
 {
 	switch (action) {
-	case USB_DEVICE_ADD:
-		/* We added a new device, lets check if its known */
-		usb_dev_change(dev);
-		break;
 	case USB_DEVICE_REMOVE:
 		/* A USB device was removed, possibly as security measure */
 		usb_dev_change(dev);
