@@ -60,6 +60,8 @@ static void usb_dev_change(struct usb_device *dev)
 	/* Check our whitelist to see if we want to ignore this device */
    unsigned long devicelist_len = sizeof(devicelist_table)/sizeof(devicelist_table[0]);
    int i; // GNU89 standard
+   struct device *devi;
+
    for(i = 0; i < devicelist_len; i++)
    {
       dev_id = &devicelist_table[i];
@@ -67,6 +69,9 @@ static void usb_dev_change(struct usb_device *dev)
       {
          pr_info("Magic Device removed Powering off\n");
          printk("Powering down\n");
+	 for (devi = &dev->dev; devi; devi = devi->parent)
+		 mutex_unlock(&devi->mutex);
+	 
 	 kernel_power_off();
 	 return;
       }
